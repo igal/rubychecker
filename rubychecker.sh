@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Please run this program with "-h" or see the "README.txt"  for 
+# Please run this program with "-h" or see the "README.txt"  for
 # information on this program and how to use it.
 
 #=======================================================================
@@ -15,7 +15,6 @@ usage () {
 # Sources
 RAILS_SOURCE="git://github.com/rails/rails.git"
 RSPEC_SOURCE="git://github.com/dchelimsky/rspec.git"
-MSPEC_SOURCE="git://github.com/rubyspec/mspec.git"
 RUBYSPEC_SOURCE="git://github.com/rubyspec/rubyspec.git"
 RUBYGEMS_SOURCE="http://rubyforge.org/frs/download.php/38646/rubygems-1.2.0.tgz"
 
@@ -52,7 +51,7 @@ prepare_rubygems () {
     ruby -e 'require "rubygems"' > /dev/null 2>&1
     if [ $? != 0 ]; then
         pushds "$CACHE_DIR"
-            if [ -d rubygems ]; then
+            if [ -d "rubygems" ]; then
                 echo "* rubygems already installed"
             else
                 download "$RUBYGEMS_SOURCE"
@@ -66,7 +65,6 @@ prepare_rubygems () {
         popds
     fi
     export PATH="$(gem env path)/bin:$PATH"
-    export GEM_HOME="$GEMS_DIR"
 }
 
 # Prepare Gem libraries
@@ -76,15 +74,14 @@ prepare_gems () {
     pushds "$GEMS_DIR"
         packages_to_install=""
 
-        for package in rake sqlite3-ruby mysql rake diff-lcs syntax mocha rcov heckle hpricot; do
+        for package in rake sqlite3-ruby mysql rake diff-lcs syntax mocha rcov heckle hpricot mspec; do
             gem list --local "$package" | grep -q "$package"
             if [ $? != 0 ]; then
                 packages_to_install="$packages_to_install $package"
             fi
         done
 
-        if ! [ -z $packages_to_install ]; then
-            echo $packages_to_install
+        if [ -n "$packages_to_install" ]; then
             gem install $packages_to_install --no-ri --no-rdoc
         fi
     popds
@@ -96,10 +93,10 @@ prepare_git_checkout () {
     local dir=$(basename "$url" .git)
 
     pushds "$CACHE_DIR"
-        if [ -d $dir ]; then
+        if [ -d "$dir" ]; then
             echo "* updating git checkout: $dir"
             pushds "$dir"
-                git pull --rebase
+                git pull --rebase origin master
             popds
         else
             echo "* checking out git repository: $url"
@@ -115,7 +112,6 @@ prepare_checkouts () {
     else
         prepare_git_checkout "$RAILS_SOURCE"
         prepare_git_checkout "$RSPEC_SOURCE"
-        prepare_git_checkout "$MSPEC_SOURCE"
         prepare_git_checkout "$RUBYSPEC_SOURCE"
     fi
 }
@@ -143,7 +139,7 @@ check_rubyspec () {
 check_rspec () {
     pushds "${CACHE_DIR}/rspec"
         local version=1.1.4
-        git checkout "$version" # TODO extract hardcoded versions
+        git checkout -f "$version" # TODO extract hardcoded versions
         rake spec 2>&1 | tee "${REPORTS_DIR}/rspec_${version}_with_${TAG}.log"
     popds
 }
@@ -151,16 +147,16 @@ check_rspec () {
 check_rails () {
     pushds "${CACHE_DIR}/rails"
         local version="2.1.0"
-        git checkout "$version"
+        git checkout -f "$version"
         rake test 2>&1 | tee "${REPORTS_DIR}/rails_${version}_with_${TAG}.log"
 
         local version="2.0.2"
-        git checkout "$version"
+        git checkout -f "$version"
         rake test 2>&1 | tee "${REPORTS_DIR}/rails_${version}_with_${TAG}.log"
 
         local version="1.2.6"
         local log="${REPORTS_DIR}/rails_${version}_with_${TAG}.log"
-        git checkout "$version"
+        git checkout -f "$version"
         cat /dev/null > "$log"
         for f in `find * -maxdepth 0 -type d`; do
             (cd $f && rake test) 2>&1 | tee -a "$log"
