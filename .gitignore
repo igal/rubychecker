@@ -2,3 +2,4 @@ cache
 reports
 .*.swp
 *.tmp
+tmp
