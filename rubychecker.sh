@@ -178,7 +178,7 @@ TAG="current"
 SKIP_CHECKOUTS=0
 
 # Process arguments
-while getopts 'ht:vGRSC' OPTION
+while getopts ':ht:vGRSC' OPTION
 do
     case $OPTION in
     h)
@@ -199,7 +199,7 @@ do
         SKIP_CHECKOUTS=1
         ;;
     ?)
-        echo "Unknown variable"
+        echo "Unknown option: $OPTARG"
         exit 2
         ;;
     esac
