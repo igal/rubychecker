@@ -183,7 +183,7 @@ do
         TAG="$OPTARG"
         ;;
     v)
-        echo "rubychecker 0.1"
+        echo "rubychecker 0.0.1"
         exit 0
         ;;
     S)
