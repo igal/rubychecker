@@ -10,7 +10,7 @@ usage () {
     cat <<HERE
 rubychecker - runs checks on a Ruby interpreter
 
-USAGE: rubychecker.sh [OPTIONS] [BASEDIR]
+USAGE: rubychecker.sh [OPTIONS]
 
 OPTIONS:
     -t tag
@@ -20,29 +20,11 @@ OPTIONS:
     -v
         Displays version number and quits.
 
-    -U
+    -C
         Skip checkouts
 
-    -R
-        Skip installing RubyGems program
-
-    -G
-        Skip installing Gem libraries
-
     -S
-        Skip checkouts, RubyGems, and Gems
-
-
-BASE DIRECTORY STRUCTURE
-
-    cache
-
-    reports
-
-EXAMPLE
-
-  ./rubychecker.sh .
-      This will use the current directory as the working directory.
+        Skip all preparations that can be skipped
 HERE
 }
 
@@ -83,13 +65,10 @@ download () {
     wget --continue --timeout=10
 }
 
-# Prepare the RubyGems library
+# Prepare the RubyGems application
 prepare_rubygems () {
-    # TODO avoid reinstalling rubygems if already present
-
-    if [ $SKIP_RUBYGEMS = 1 ]; then
-        export PATH="$(gem env path)/bin:$PATH"
-    else
+    ruby -e 'require "rubygems"' > /dev/null 2>&1
+    if [ $? != 0 ]; then
         pushds "$CACHE_DIR"
             if [ -d rubygems ]; then
                 echo "* rubygems already installed"
@@ -101,31 +80,32 @@ prepare_rubygems () {
 
             pushds "rubygems"
                 ruby "setup.rb" --no-ri --no-rdoc
-                export PATH="$(gem env path)/bin:$PATH"
             popds
         popds
     fi
+    export PATH="$(gem env path)/bin:$PATH"
+    export GEM_HOME="$GEMS_DIR"
 }
 
-# Prepare many Gems
+# Prepare Gem libraries
 prepare_gems () {
-    # TODO avoid reinstalling gems already present
     # TODO cache downloaded gems locally
 
-    export GEM_HOME="$CACHE_DIR/gems"
+    pushds "$GEMS_DIR"
+        packages_to_install=""
 
-    if [ $SKIP_GEMS = 1 ]; then
-        return 0;
-    else
-        mkdir -p "$GEM_HOME"
+        for package in rake sqlite3-ruby mysql rake diff-lcs syntax mocha rcov heckle hpricot; do
+            gem list --local "$package" | grep -q "$package"
+            if [ $? != 0 ]; then
+                packages_to_install="$packages_to_install $package"
+            fi
+        done
 
-        pushds "$CACHE_DIR/mspec"
-            rake gem
-            gem install pkg/*.gem --no-ri --no-rdoc
-        popds
-
-        gem install rake sqlite3-ruby mysql rake diff-lcs syntax mocha rcov heckle hpricot --no-ri --no-rdoc
-    fi
+        if ! [ -z $packages_to_install ]; then
+            echo $packages_to_install
+            gem install $packages_to_install --no-ri --no-rdoc
+        fi
+    popds
 }
 
 # Checkout or freshen Git code from URL
@@ -209,19 +189,14 @@ check_rails () {
 #===[ Main ]============================================================
 
 # Defaults
+BASE_DIR="$PWD"
 TAG="current"
 SKIP_CHECKOUTS=0
-SKIP_RUBYGEMS=0
-SKIP_GEMS=0
 
 # Process arguments
-while getopts 'd:t:vGRSU' OPTION
+while getopts 't:vGRSC' OPTION
 do
     case $OPTION in
-    d)
-        # TODO deal with absolute paths!
-        BASE_DIR="${PWD}/${OPTARG}"
-        ;;
     t)
         TAG="$OPTARG"
         ;;
@@ -229,18 +204,10 @@ do
         echo "rubychecker 0.1"
         exit 0
         ;;
-    G)
-        SKIP_GEMS=1
-        ;;
-    R)
-        SKIP_RUBYGEMS=1
-        ;;
     S)
         SKIP_CHECKOUTS=1
-        SKIP_GEMS=1
-        SKIP_RUBYGEMS=1
         ;;
-    U)
+    C)
         SKIP_CHECKOUTS=1
         ;;
     ?)
@@ -254,6 +221,7 @@ shift $(($OPTIND - 1))
 # Set paths
 REPORTS_DIR="$BASE_DIR/reports"
 CACHE_DIR="$BASE_DIR/cache"
+GEMS_DIR="$BASE_DIR/cache/gems"
 
 # Check arguments
 if ! [ "$BASE_DIR" ]; then
@@ -264,6 +232,7 @@ fi
 if ! [ -d "$BASE_DIR" ]; then mkdir -p "$BASE_DIR"; fi
 if ! [ -d "$CACHE_DIR" ]; then mkdir -p "$CACHE_DIR"; fi
 if ! [ -d "$REPORTS_DIR" ]; then mkdir -p "$REPORTS_DIR"; fi
+if ! [ -d "$GEMS_DIR" ]; then mkdir -p "$GEMS_DIR"; fi
 
 prepare
 check
