@@ -63,6 +63,12 @@ WHAT DOESN'T WORK YET:
     - Any OS other than UNIX
     - Any Ruby interpreter other than MRI 1.8
 
+SOURCE CODE: 
+    http://github.com/igal/rubycheck_sh
+
+ISSUE TRACKER:
+    http://code.google.com/p/rubychecker
+    
 LICENSE:
     This program is provided under the same license as Ruby:
         http://www.ruby-lang.org/en/LICENSE.txt
