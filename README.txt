@@ -42,10 +42,9 @@ DEPENDENCIES:
     - complete build environment, e.g., gcc, make, etc
     - bash
     - grep
-    - wget
     - git
     - svn
-    - tar
+    - unzip
     - MySQL headers
     - SQLite3 headers
     - MySQL server

@@ -16,7 +16,7 @@ usage () {
 RAILS_SOURCE="git://github.com/rails/rails.git"
 RSPEC_SOURCE="git://github.com/dchelimsky/rspec.git"
 RUBYSPEC_SOURCE="git://github.com/rubyspec/rubyspec.git"
-RUBYGEMS_SOURCE="http://rubyforge.org/frs/download.php/38646/rubygems-1.2.0.tgz"
+RUBYGEMS_SOURCE="http://rubyforge.org/frs/download.php/38647/rubygems-1.2.0.zip"
 
 #===[ Functions ]=======================================================
 
@@ -43,7 +43,13 @@ fail () {
 # Download the specified URL into the current directory.
 download () {
     local url=$1
-    wget --continue --timeout=10
+    wget --version > /dev/null 2>&1
+    if [ $? = 0 ]; then
+        wget --continue --timeout=10 "$url"
+    else
+        target=$(basename $url)
+        ruby -e "require 'open-uri'; File.open('$target', 'w+'){|h| h.write(open('$url').read) }"
+    fi
 }
 
 # Prepare the RubyGems application
@@ -55,8 +61,8 @@ prepare_rubygems () {
                 echo "* rubygems already installed"
             else
                 download "$RUBYGEMS_SOURCE"
-                tar xvfz $(basename "$RUBYGEMS_SOURCE")
-                mv $(basename "$RUBYGEMS_SOURCE" .tgz) "rubygems"
+                unzip $(basename "$RUBYGEMS_SOURCE")
+                mv $(basename "$RUBYGEMS_SOURCE" .zip) "rubygems"
             fi
 
             pushds "rubygems"
