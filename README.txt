@@ -41,3 +41,7 @@ DEPENDENCIES:
             GRANT ALL ON activerecord_unittest2.* TO 'rails'@'localhost';
             GRANT ALL ON actionwebservice_unittest.* TO 'rails'@'localhost';
             FLUSH PRIVILEGES;
+
+LICENSE:
+    This program is provided under the same license as Ruby:
+        http://www.ruby-lang.org/en/LICENSE.txt
