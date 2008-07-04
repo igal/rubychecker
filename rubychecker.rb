@@ -44,7 +44,7 @@ class RubyChecker
   def initialize(opts={})
     @base_dir = File.expand_path(opts[:base_dir] || Dir.pwd)
     @tag      = opts[:tag] || "current"
-    @freshen  = opts[:tag] == true || false
+    @freshen  = opts[:freshen] == true || false
 
     @reports_dir = File.expand_path(File.join(@base_dir, "reports"))
     @cache_dir   = File.expand_path(File.join(@base_dir, "cache"))
@@ -81,6 +81,7 @@ class RubyChecker
         if File.directory?(name)
           if @freshen
             FileUtils.cd(name) do
+              system "git checkout -f master"
               system "git pull --rebase origin master"
               system "git fetch --tags"
             end
@@ -163,16 +164,19 @@ class RubyChecker
 
   RAILS_TESTS = {
     "2.1.0" => lambda{|checker|
+      name = "rails"
       version = "2.1.0"
       system "git checkout -f v#{version}"
       system "rake test 2>&1 | tee #{checker.report_filename_for(name, version)}"
     },
     "2.0.2" => lambda{|checker|
+      name = "rails"
       version = "2.0.2"
       system "git checkout -f v#{version}"
       system "rake test 2>&1 | tee #{checker.report_filename_for(name, version)}"
     },
     "1.2.6" => lambda{|checker|
+      name = "rails"
       version = "1.2.6"
       system "git checkout -f v#{version}"
       report = checker.report_filename_for(name, version)
@@ -207,15 +211,16 @@ end
 
 if __FILE__ == $0
   rc = RubyChecker.new
-
   targets = []
+  prepare_only = false
 
-  opts = GetoptLong.new(
+  opts = GetoptLong.new(*[
+    ['--freshen', '-f', GetoptLong::NO_ARGUMENT],
     ['--help',    '-h', GetoptLong::NO_ARGUMENT],
+    ['--prepare', '-p', GetoptLong::NO_ARGUMENT],
     ['--tag',     '-t', GetoptLong::OPTIONAL_ARGUMENT],
-    ['--version', '-v', GetoptLong::NO_ARGUMENT],
-    ['--freshen', '-f', GetoptLong::NO_ARGUMENT]
-  )
+    ['--version', '-v', GetoptLong::NO_ARGUMENT]
+  ])
 
   opts.each do |opt, arg|
     case opt
@@ -224,6 +229,8 @@ if __FILE__ == $0
     when '--help'
       print File.read(File.join(File.dirname(__FILE__), "README.txt"))
       exit 0
+    when '--prepare'
+      prepare_only = true
     when '--tag'
       rc.tag = arg
     when '--version'
@@ -235,5 +242,5 @@ if __FILE__ == $0
   targets.concat(ARGV)
 
   rc.prepare
-  rc.check(*targets)
+  rc.check(*targets) unless prepare_only
 end
