@@ -102,7 +102,9 @@ prepare_git_checkout () {
         if [ -d "$dir" ]; then
             echo "* updating git checkout: $dir"
             pushds "$dir"
+                git checkout -f master
                 git pull --rebase origin master
+                git fetch --tags
             popds
         else
             echo "* checking out git repository: $url"
