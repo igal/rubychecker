@@ -1,7 +1,88 @@
 #!/usr/bin/env ruby
 
+# = RubyChecker - Runs checks on a Ruby interpreter
+#
+# == USAGE
+#
+#   rubychecker.sh [options] [suite or suites to run]
+#
+# == OPTIONS
+#
+#   * -t TAG
+#     A tag to include in the filenames of the reports, e.g., a tag of
+#     "p111" may create report files like "rspec_1.1.4_with_p111.log"
+#   * -v
+#     Displays version information and exits.
+#   * -h
+#     Displays this help information and exits.
+#   * -f
+#     Freshens existing checkouts (git pull, svn update, etc).
+#   * -p
+#     Prepares dependencies and exits without running checks.
+#
+# == BASIC EXAMPLE
+#
+#   # Runs test suites against the "ruby" interpreter in your current
+#   # shell's PATH and records them to the "reports" directory:
+#
+#   ./rubychecker.rb
+#
+# == COMPLEX EXAMPLE
+#
+#   # Download, compile and check a Ruby interpreter from SVN:
+#
+#   rubysvn=$PWD/cache/ruby
+#   rubytmp=$PWD/tmp/ruby
+#   export PATH=$rubytmp/bin:$PATH
+#   mkdir -p cache
+#   svn co http://svn.ruby-lang.org/repos/ruby/branches/ruby_1_8_6 $rubysvn
+#   pushd $rubysvn
+#       autoconf
+#       ./configure --prefix=$rubytmp && make && make install
+#   popd
+#   ./rubychecker.rb -t svn186
+#
+# == DEPENDENCIES:
+#   * ruby
+#   * ruby headers
+#   * complete build environment, e.g., gcc, make, etc
+#   * bash
+#   * grep
+#   * git
+#   * svn
+#   * unzip
+#   * MySQL headers
+#   * SQLite3 headers
+#   * MySQL server
+#       You'll need to login as DBA and run:
+#         CREATE DATABASE activerecord_unittest;
+#         CREATE DATABASE activerecord_unittest2;
+#         CREATE DATABASE actionwebservice_unittest;
+#         CREATE USER 'rails'@'localhost' IDENTIFIED BY PASSWORD '';
+#         GRANT ALL ON activerecord_unittest.* TO 'rails'@'localhost';
+#         GRANT ALL ON activerecord_unittest2.* TO 'rails'@'localhost';
+#         GRANT ALL ON actionwebservice_unittest.* TO 'rails'@'localhost';
+#         FLUSH PRIVILEGES;
+#
+# == WHAT DOESN'T WORK YET:
+#
+#   * Any OS other than UNIX
+#   * Any Ruby interpreter other than MRI 1.8
+#
+# == SOURCE CODE:
+#
+#   http://github.com/igal/rubycheck_sh
+#
+# == ISSUE TRACKER:
+#
+#   http://code.google.com/p/rubychecker
+#
+# == LICENSE:
+#
+#   This program is provided under the same license as Ruby:
+#     http://www.ruby-lang.org/en/LICENSE.txt
+
 require 'fileutils'
-require 'getoptlong'
 require 'open-uri'
 require 'uri'
 
@@ -210,6 +291,9 @@ class RubyChecker
 end
 
 if __FILE__ == $0
+  require 'getoptlong'
+  require 'rdoc/usage'
+
   rc = RubyChecker.new
   targets = []
   prepare_only = false
@@ -222,21 +306,25 @@ if __FILE__ == $0
     ['--version', '-v', GetoptLong::NO_ARGUMENT]
   ])
 
-  opts.each do |opt, arg|
-    case opt
-    when '--freshen'
-      rc.freshen = true
-    when '--help'
-      print File.read(File.join(File.dirname(__FILE__), "README.txt"))
-      exit 0
-    when '--prepare'
-      prepare_only = true
-    when '--tag'
-      rc.tag = arg
-    when '--version'
-      puts "rubychecker #{RubyChecker::VERSION}"
-      exit 0
+  begin
+    opts.each do |opt, arg|
+      case opt
+      when '--freshen'
+        rc.freshen = true
+      when '--help'
+        RDoc::usage
+      when '--prepare'
+        prepare_only = true
+      when '--tag'
+        rc.tag = arg
+      when '--version'
+        puts "rubychecker #{RubyChecker::VERSION}"
+        exit 0
+      end
     end
+  rescue GetoptLong::InvalidOption => e
+    # Error is displayed automatically
+    exit 7
   end
 
   targets.concat(ARGV)
