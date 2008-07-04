@@ -4,7 +4,7 @@
 #
 # == USAGE
 #
-#   rubychecker.sh [options] [suite or suites to run]
+#   rubychecker.rb [options] [suite or suites to run]
 #
 # == OPTIONS
 #
@@ -46,7 +46,6 @@
 #   * ruby
 #   * ruby headers
 #   * complete build environment, e.g., gcc, make, etc
-#   * bash
 #   * grep
 #   * git
 #   * svn
@@ -71,7 +70,7 @@
 #
 # == SOURCE CODE:
 #
-#   http://github.com/igal/rubycheck_sh
+#   http://github.com/igal/rubychecker
 #
 # == ISSUE TRACKER:
 #
@@ -329,6 +328,11 @@ if __FILE__ == $0
   end
 
   targets.concat(ARGV)
+
+  if targets.first == "README.txt"
+    system "'#{__FILE__}' --help > README.txt"
+    exit 0
+  end
 
   rc.prepare
   rc.check(*targets) unless prepare_only
