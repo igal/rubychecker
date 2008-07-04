@@ -16,18 +16,28 @@ OPTIONS
     Displays version information and exits.
   * -h
     Displays this help information and exits.
+  * -F
+    Don't freshen existing checkouts (skip git pull, svn update, etc).
   * -f
     Freshens existing checkouts (git pull, svn update, etc).
   * -p
     Prepares dependencies and exits without running checks.
+  * -n
+    Dry-run, display commands to execute but don't run them.
 
 
-BASIC EXAMPLE
--------------
+BASIC EXAMPLES
+--------------
   # Runs test suites against the "ruby" interpreter in your current
   # shell's PATH and records them to the "reports" directory:
-
   ./rubychecker.rb
+
+  # Run only the test suite for rspec:
+  ./rubychecker.rb rspec
+
+  # Run only the test suite for rails version 2.1.0 and record the results
+  # into a report with the tag "p265" in the filenames:
+  ./rubychecker.rb -t p265 rails=2.1.0
 
 
 COMPLEX EXAMPLE
