@@ -202,6 +202,7 @@ class RubyChecker
         end
       end
     end
+    ENV["PATH"] = "#{`gem env path`.strip}/bin:#{ENV['PATH']}"
   end
 
   def prepare_gems
